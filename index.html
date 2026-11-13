@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a1320">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>Campus Silence Heatmap</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header><div class="logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></div><h1>Campus Silence <span class="mono">Heatmap</span></h1></header>
+<div class="wrap">
+<button class="btn" id="quietBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15v4M17 17h4"/></svg>Find quietest</button>
+<nav id="tabs"><button data-t="heat" class="on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px"><circle cx="12" cy="12" r="10"/><path d="m16 8-2 6-6 2 2-6z"/></svg>Heatmap</button><button data-t="pred"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Predictions</button><button data-t="ins"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Insights</button><button data-t="admin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Admin</button></nav>
+
+<section id="heat">
+<div class="mono eyebrow">Campus acoustic monitor / 01</div>
+<h2>Find your quiet corner.</h2>
+<p class="sub">Explore creator-defined noise readings and choose the right place to focus.</p>
+<div class="pill mono"><span class="dot"></span>Fixed dataset <b id="cnt">0 zones</b></div>
+<div class="box">
+<label class="mono">Time slot</label><select id="slot"></select>
+<label class="mono">Noise category</label><select id="cat"></select>
+<label class="mono">Search locations</label><input id="q" placeholder="Library, room code...">
+</div>
+<div class="box">
+<div class="mono" style="color:var(--acc)">Yashoda Technical Campus, Satara</div>
+<h3 id="mapTitle" style="font-size:26px;font-weight:300;margin:12px 0">Noise field</h3>
+<div class="legend"><span><i style="background:var(--q)"></i>quiet</span><span><i style="background:var(--m)"></i>moderate</span><span><i style="background:var(--n)"></i>noisy</span><span><i style="background:var(--v)"></i>very noisy</span></div>
+<div class="mapwrap"><div id="map" class="lmap"></div><div class="empty" id="empty"><div><b>No fixed zones yet</b><p>Add a location from Admin to populate the map.</p></div></div></div>
+<div class="tip" id="tip">Tap a zone to see its reading and AI forecast.</div>
+<p class="note mono">Readings are creator-defined, not live microphone data &middot; <b id="vis">0 visible</b></p>
+</div>
+</section>
+
+<section id="pred" hidden>
+<div class="box" style="margin-top:24px">
+<div class="mono" style="color:var(--mut)">Random Forest forecast model</div>
+<h3 style="font-size:26px;font-weight:300;margin:8px 0">Likely conditions by time slot</h3>
+<p class="sub" style="font-size:17px;margin:0 0 6px">Trained on the creator's fixed readings. Tap a zone for its next-4-slots forecast.</p>
+<label class="mono">Campus context</label><select id="event"></select>
+<div class="slots" id="pslots"></div></div>
+<div id="plist"></div>
+<div class="box" id="fc" hidden></div>
+</section>
+
+<section id="ins" hidden>
+<div class="mono eyebrow">Campus acoustic monitor / 01</div>
+<h2>A clearer read on campus.</h2>
+<p class="sub">Aggregate view of the creator-entered readings.</p>
+<div class="stats">
+<div class="stat"><span class="mono" style="color:var(--mut)">Mapped zones</span><b id="s1">0</b></div>
+<div class="stat"><span class="mono" style="color:var(--mut)">Quiet zones</span><b id="s2">0</b></div>
+<div class="stat"><span class="mono" style="color:var(--mut)">Campus average</span><b id="s3">0 dB</b></div>
+<div class="stat"><span class="mono" style="color:var(--mut)">Best study spot</span><b id="s4" style="font-size:20px">&mdash;</b></div></div>
+<div class="box"><div class="mono" style="color:var(--acc)">Campus rhythm</div>
+<h3 style="font-size:26px;font-weight:300;margin:12px 0 4px">Average noise by time slot</h3>
+<div class="chart" id="chart"></div><div class="axis mono" id="axis"></div></div>
+</section>
+
+<section id="admin" hidden>
+<div class="mono eyebrow">Admin</div>
+<h2>Add a zone.</h2>
+<p class="sub">Only the creator can change data. Enter the admin API key, then add zones (map x: west&rarr;east, y: north&rarr;south, 0&ndash;100).</p>
+<div class="box"><label class="mono">Admin API key</label><input id="key" type="password" placeholder="X-API-Key"></div>
+<div class="box">
+<label class="mono">Location name</label><input id="aName" placeholder="Central Library, Room 204">
+<label class="mono">Category</label><select id="aCat"></select>
+<div class="grid"><div><label class="mono">Map x (0-100)</label><input id="aX" type="number" min="0" max="100" value="50"></div>
+<div><label class="mono">Map y (0-100)</label><input id="aY" type="number" min="0" max="100" value="50"></div></div>
+<label class="mono">Click the map to place this zone</label><div id="pick" class="lmap" style="height:300px"></div>
+<div class="grid" id="aDb"></div>
+<button class="btn" id="aAdd" style="margin-bottom:0">Save zone</button>
+<p class="note" id="aMsg"></p></div>
+<div class="box"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+<b>Saved zones</b><span><button class="btn ghost" id="sample">Reset to sample data</button> <button class="btn ghost" id="clear">Clear all</button></span></div>
+<div id="zl"></div></div>
+</section>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
