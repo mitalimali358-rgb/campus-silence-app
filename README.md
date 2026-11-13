@@ -1,1 +1,1 @@
-# campus-silence-heatmap-app
+# campus-silence-app
