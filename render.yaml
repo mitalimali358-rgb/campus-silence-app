@@ -1,0 +1,16 @@
+# Render Blueprint: deploys the backend + frontend as ONE web service.
+services:
+  - type: web
+    name: campus-silence-heatmap
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/meta
+    envVars:
+      - key: ADMIN_API_KEY
+        sync: false        # Render will ask you to type your secret admin key
+      - key: CAMPUS_LAT
+        value: "17.72158"
+      - key: CAMPUS_LNG
+        value: "74.02065"
